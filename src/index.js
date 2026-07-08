@@ -322,6 +322,23 @@ server.tool(
 
 // ---- HTTP transport wiring ----
 const app = express();
+
+// Remote MCP clients (claude.ai / Cowork running in a browser context) call this
+// endpoint cross-origin, so it needs CORS headers or the browser blocks the request
+// before it ever reaches Express — this shows up client-side as a generic
+// "couldn't connect" / "couldn't register" error with nothing useful in server logs.
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, Mcp-Session-Id, Accept, Last-Event-ID");
+  res.header("Access-Control-Expose-Headers", "Mcp-Session-Id");
+  if (req.method === "OPTIONS") {
+    res.sendStatus(204);
+    return;
+  }
+  next();
+});
+
 app.use(express.json());
 
 app.all("/mcp", async (req, res) => {
