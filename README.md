@@ -22,11 +22,28 @@ works for third-party videos with public/auto-generated captions. This is **not 
 outside YouTube's documented terms for programmatic access:
 - It can silently break if YouTube changes its page structure.
 - It fails cleanly (returns `available: false` with an error message) for videos with captions disabled, no captions, or private/restricted videos — this doesn't fail the whole batch in `get_transcripts_bulk`.
-- Don't hammer it at high volume/concurrency — fetch in modest batches (the bulk tool caps at 15 per call for this reason).
+
+### Known limitation: unreliable from cloud hosts (Render/Railway/etc.)
+
+In practice, YouTube's anti-bot system treats requests from shared datacenter IPs (Railway, Render, AWS, GCP, ...) with
+far more suspicion than residential IPs. Testing this server deployed on Railway: transcript fetches for real-world
+videos failed almost every time with `"YouTube is receiving too many requests from this IP and now requires solving a
+captcha"`, regardless of throttling/sequencing — while the exact same calls succeeded 100% of the time run locally from
+a residential connection. (One globally-scraped test video, `dQw4w9WgXcQ`, consistently succeeds even from the cloud —
+almost certainly because it's cached/whitelisted from being the most-used scraping test video on the internet. It is
+not representative of real videos.)
+
+**Practical implication:** treat `get_transcript`/`get_transcripts_bulk` as best-effort when called through a remote
+deployment. For a Custom Connector used by Cowork, expect transcript-based summaries to mostly fall back to
+metadata-only (title/description) — the `video-digest` skill already does this gracefully. If you need reliable
+transcript-depth summaries, run that part of the workflow from a local session (e.g. Claude Code on your own machine)
+instead of through the remote connector, or route the server's outbound requests through a residential/rotating proxy
+(added cost/complexity, not implemented here).
 
 For a batch workflow of 80-100 videos: call `search_videos` once (up to 100 results, ~2 search units), then call
 `get_transcripts_bulk` in batches of ~10-15 video IDs, summarizing each batch before requesting the next rather than
-pulling all transcripts into context at once.
+pulling all transcripts into context at once. Expect most of those transcript calls to fail if run through the remote
+connector — plan for a metadata-only digest as the realistic baseline.
 
 ## 1. Get a YouTube API key (free)
 
@@ -72,9 +89,18 @@ Your MCP endpoint will be: `https://your-app.your-host.com/mcp`
 
 In Claude (claude.ai, Desktop, or Cowork):
 1. Settings → Connectors → Add custom connector
-2. Enter your server URL: `https://your-app.your-host.com/mcp`
-3. If you set `MCP_AUTH_TOKEN`, you'll need to pass it as a Bearer token — check the current Custom Connector UI for where to enter a header/token, since this is a newer field and may vary
-4. Enable the connector for your conversation/Cowork task via the "+" → Connectors menu
+2. Enter your server URL — **including the `/mcp` path**: `https://your-app.your-host.com/mcp`. The dialog can render
+   the saved URL without the path in its detail view, which is misleading — if the connector fails to register, double
+   check the URL field genuinely ends in `/mcp` before troubleshooting anything else.
+3. As of this writing, the custom connector dialog only supports **no auth** or full **OAuth (Client ID/Secret)** —
+   there is no field for a static bearer token. If you set `MCP_AUTH_TOKEN` on your host, Claude has no way to send it
+   and every call will 401. For a personal/single-user connector, the practical option is to leave `MCP_AUTH_TOKEN`
+   unset (no auth) rather than implement full OAuth. Also turn off "Individual sign-in" in the connector's advanced
+   settings — leaving it on makes Claude attempt an OAuth handshake your server doesn't implement, which surfaces as a
+   "couldn't register with sign-in service" error even when the server itself is reachable.
+4. The server must send CORS headers (already handled in `src/index.js`) since the connecting client calls it
+   cross-origin — without this, connection attempts fail client-side with a generic, hard-to-diagnose error.
+5. Enable the connector for your conversation/Cowork task via the "+" → Connectors menu
 
 ## 5. Use it
 
