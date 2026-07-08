@@ -3,7 +3,7 @@ name: video-digest
 description: Generate a digest of summaries for a batch (80-100) of YouTube videos matching a topic/query within a specific date range, using the youtube-mcp-server custom connector. Use when the user asks to summarize, analyze, or digest a set of YouTube videos over a date range or topic.
 ---
 
-Requires the `youtube-mcp-server` custom connector enabled for this conversation (tools: `search_videos`, `get_video_details`, `get_transcripts_bulk`, `get_channel_uploads`).
+Requires the `youtube-mcp-server` custom connector enabled for this conversation (tools: `search_videos`, `get_video_details`, `get_transcripts_bulk`, `get_channel_uploads`, `get_quota_status`).
 
 ## Inputs to confirm before starting
 
@@ -15,7 +15,7 @@ If not already given, ask the user for:
 
 ## Workflow
 
-1. **Search once.** Call `search_videos` with `maxResults` up to 100 for the query + date range. This costs ~2 search units per 100 results — don't repeat this call for the same query/range.
+1. **Check quota, then search once.** For a run near/above 50 videos, call `get_quota_status` first — a 100-video search costs ~200 of the 10,000 daily units. If usage is already high, tell the user before proceeding rather than letting the search fail partway. Then call `search_videos` with `maxResults` up to 100 for the query + date range — don't repeat this call for the same query/range.
 
 2. **Optional: enrich with stats.** If the user cares about popularity/engagement, batch the returned video IDs through `get_video_details` in chunks of 50 to get view/like counts and duration. Use this to filter out low-signal videos (e.g. very low views) or Shorts if the user only wants long-form content.
 
@@ -40,4 +40,4 @@ If not already given, ask the user for:
 
 - Transcript fetching is unofficial (YouTube's public caption endpoint, not the Data API) — expect some failures and don't be surprised if it needs fixing later if YouTube changes its page structure.
 - Respect the search quota: the dedicated search bucket is roughly 100 calls/day. A single 100-result search uses ~2 of those: don't re-run searches speculatively.
-- This connector only works while the user's local server + tunnel (`npm run tunnel`) are running. If every tool call fails or times out, tell the user to check that rather than retrying repeatedly.
+- This connector only works while the user's local server + tunnel (`npm run watch`, or `npm run tunnel`) are running. If every tool call fails or times out, tell the user to check that rather than retrying repeatedly.

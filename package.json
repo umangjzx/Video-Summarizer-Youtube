@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node src/index.js",
     "digest": "node scripts/digest.mjs",
-    "tunnel": "concurrently -n server,ngrok -c blue,green \"npm start\" \"ngrok http --url=https://single-darkness-estrogen.ngrok-free.dev 8080\""
+    "tunnel": "concurrently -n server,ngrok -c blue,green \"npm start\" \"ngrok http --url=https://single-darkness-estrogen.ngrok-free.dev 8080\"",
+    "watch": "node scripts/watchdog.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",

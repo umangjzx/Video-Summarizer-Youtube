@@ -5,6 +5,7 @@ import { z } from "zod";
 import { requireApiKey } from "./lib/env.js";
 import { searchVideos, getVideoDetails, getChannelUploads, listCaptions } from "./lib/youtube.js";
 import { fetchTranscriptText, fetchTranscriptsSequential } from "./lib/transcripts.js";
+import { getUsage } from "./lib/quota.js";
 
 const YOUTUBE_API_KEY = requireApiKey();
 
@@ -133,6 +134,20 @@ server.tool(
         },
       ],
     };
+  }
+);
+
+// ---- Tool: get_quota_status ----
+server.tool(
+  "get_quota_status",
+  "Check today's YouTube Data API quota usage (resets at midnight Pacific Time). Call this before " +
+    "a large search/digest run to confirm there's enough quota left — search.list costs 100 units, " +
+    "videos/channels/playlistItems cost 1 unit, captions.list costs 50. The daily limit is 10,000 " +
+    "units shared across all of it. Transcript fetching (get_transcript/get_transcripts_bulk) does " +
+    "not touch this quota at all.",
+  {},
+  async () => {
+    return { content: [{ type: "text", text: JSON.stringify(getUsage(), null, 2) }] };
   }
 );
 

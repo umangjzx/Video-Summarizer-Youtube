@@ -10,6 +10,7 @@ A remote MCP server that wraps the YouTube Data API v3, for use as a **Custom Co
 - `list_captions` — check whether captions exist (official API, metadata only)
 - `get_transcript` — fetch transcript text for a single video (unofficial, see below)
 - `get_transcripts_bulk` — fetch transcripts for up to 15 videos in one call (unofficial, see below)
+- `get_quota_status` — check today's cumulative YouTube API quota usage before running a large search
 
 ## Transcripts: official vs unofficial
 
@@ -65,6 +66,36 @@ Options: `--after`/`--before` (explicit ISO date range, overrides `--days`), `--
 `--lang` (preferred transcript language), `--max-chars` (per-transcript truncation, default 20000), `--skip-details`,
 `--skip-transcripts`, `--out <path>`. Run `node scripts/digest.mjs --help` for the full list.
 
+### Rendering the report as a styled digest page
+
+`scripts/render-digest.mjs` turns a `digest-*.json` report into the same filterable/sortable HTML page shown earlier
+in this project (search box, transcript-only/exclude-Shorts toggles, sort by date or views). It only handles the
+mechanical merge + render — the actual summary text for each video still needs to be written by something that can
+read and understand the transcripts (Claude, in practice):
+
+```bash
+npm run digest -- "AI stock market analysis" --days 7 --max 100
+# → have Claude read digest-*.json and write a { "<videoId>": "summary text" } map, save as summaries.json
+node scripts/render-digest.mjs digest-ai-stock-market-analysis-2026-07-08.json summaries.json digest.html
+```
+
+Run without `summaries.json` and it still renders, falling back to a truncated description per video — useful for a
+quick look at what a search returned before spending effort writing real summaries.
+
+## Quota tracking
+
+Every real API call (`search_videos`, `get_video_details`, `get_channel_uploads`, `list_captions`) is recorded against
+the actual per-endpoint cost (`search.list` = 100 units, `videos`/`channels`/`playlistItems` = 1 unit, `captions.list`
+= 50 units) in a local `.quota-usage.json` file, reset at midnight **Pacific Time** — that's when YouTube's quota
+actually resets, not local midnight. Transcript fetching (`get_transcript`/`get_transcripts_bulk`) doesn't touch this
+at all since it's not part of the official API.
+
+- Call the `get_quota_status` tool (from Claude/Cowork) or check the end of any `digest.mjs` run to see cumulative
+  usage for the day.
+- The server logs a warning to stderr once usage crosses 80% of the 10,000/day limit.
+- This is shared state: the CLI and the server both read/write the same file, so usage accumulates correctly no
+  matter which one you used.
+
 ## 1. Get a YouTube API key (free)
 
 1. Go to console.cloud.google.com → create/select a project
@@ -116,14 +147,20 @@ residential IP instead of a datacenter's. Same server, same code — just hosted
 3. Reserve a free static domain in the dashboard's **Domains** section (Universal Gateway) — a random domain resets
    every time you restart the tunnel, so a static one means you configure the Cowork connector URL once and it keeps
    working.
-4. Edit the `tunnel` script in `package.json` to use your static domain, then run:
+4. Edit the `tunnel` script in `package.json` (and `NGROK_DOMAIN` in `scripts/watchdog.mjs`, if using it) to use your
+   static domain, then run one of:
    ```bash
-   npm run tunnel
+   npm run tunnel   # starts server + ngrok together once, via `concurrently`. Stop both with Ctrl+C.
+   npm run watch    # same, but auto-restarts either process if it crashes, with backoff. Recommended.
    ```
-   This starts the server and the ngrok tunnel together with one command (via `concurrently`). Stop both with Ctrl+C.
+   `npm run watch` runs `scripts/watchdog.mjs`, which supervises the server and tunnel indefinitely instead of just
+   launching them once — a transient crash (an unhandled exception, ngrok hiccup, network blip) gets auto-recovered
+   within a few seconds instead of silently taking the connector down until you notice and restart manually. Logs go
+   to `logs/watchdog.log` as well as the console.
 
 Your machine, the server process, and the tunnel all need to be running whenever you want to use the Cowork connector
-— if you close your laptop, the connector will fail until you run `npm run tunnel` again.
+— if you close your laptop, the connector will fail until you start it again. `npm run watch` doesn't survive a full
+reboot on its own; pair it with a Windows Scheduled Task (Task Scheduler → run at log-on) if you want that too.
 
 Either way, your MCP endpoint is `https://<your-domain>/mcp`.
 

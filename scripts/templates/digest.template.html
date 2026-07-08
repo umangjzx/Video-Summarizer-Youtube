@@ -1,0 +1,458 @@
+<title>__TITLE__</title>
+<style>
+  :root {
+    --paper: #efece3;
+    --paper-raised: #f8f6ef;
+    --paper-raised-hover: #fffdf7;
+    --ink: #211f1a;
+    --ink-soft: #6b6558;
+    --ink-faint: #948c78;
+    --rule: #d9d3c3;
+    --rule-strong: #c3bca6;
+    --accent: #33415c;
+    --accent-soft: #33415c1a;
+    --good: #3f6b4f;
+    --good-soft: #3f6b4f1a;
+    --muted-badge: #8f7a5c;
+    --muted-badge-soft: #8f7a5c1a;
+    --shadow: 0 1px 2px rgba(33,31,26,0.06), 0 4px 16px rgba(33,31,26,0.05);
+  }
+  :root[data-theme="dark"] {
+    --paper: #17150f;
+    --paper-raised: #211e17;
+    --paper-raised-hover: #29261d;
+    --ink: #ece7d9;
+    --ink-soft: #a79e89;
+    --ink-faint: #7c745f;
+    --rule: #38342a;
+    --rule-strong: #4a4535;
+    --accent: #93a6cc;
+    --accent-soft: #93a6cc22;
+    --good: #7bbd94;
+    --good-soft: #7bbd9422;
+    --muted-badge: #c2a978;
+    --muted-badge-soft: #c2a97822;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 4px 20px rgba(0,0,0,0.25);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #17150f;
+      --paper-raised: #211e17;
+      --paper-raised-hover: #29261d;
+      --ink: #ece7d9;
+      --ink-soft: #a79e89;
+      --ink-faint: #7c745f;
+      --rule: #38342a;
+      --rule-strong: #4a4535;
+      --accent: #93a6cc;
+      --accent-soft: #93a6cc22;
+      --good: #7bbd94;
+      --good-soft: #7bbd9422;
+      --muted-badge: #c2a978;
+      --muted-badge-soft: #c2a97822;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 4px 20px rgba(0,0,0,0.25);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+  }
+  ::selection { background: var(--accent-soft); }
+
+  .wrap {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 2.5rem 1.25rem 5rem;
+  }
+
+  .masthead {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 3px double var(--rule-strong);
+    margin-bottom: 1.75rem;
+  }
+  .kicker {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Consolas, "Roboto Mono", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  h1 {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(1.7rem, 4.5vw, 2.5rem);
+    line-height: 1.12;
+    margin: 0;
+    text-wrap: balance;
+    letter-spacing: -0.005em;
+  }
+  .dek {
+    color: var(--ink-soft);
+    font-size: 0.98rem;
+    max-width: 62ch;
+    margin: 0;
+  }
+  .dek code {
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    font-size: 0.92em;
+    background: var(--paper-raised);
+    padding: 0.1em 0.4em;
+    border-radius: 3px;
+    border: 1px solid var(--rule);
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+  }
+  .stat {
+    background: var(--paper-raised);
+    padding: 0.85rem 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  .stat-num {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-variant-numeric: tabular-nums;
+    font-size: 1.55rem;
+    line-height: 1;
+    font-weight: 600;
+  }
+  .stat-label {
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  @media (max-width: 620px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .note {
+    background: var(--paper-raised);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    padding: 0.8rem 1rem;
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+    margin-bottom: 1.75rem;
+  }
+  .note strong { color: var(--ink); font-weight: 600; }
+
+  .toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--paper);
+    padding: 0.75rem 0 0.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 0.25rem;
+  }
+  .search {
+    flex: 1 1 220px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    padding: 0.5rem 0.7rem;
+    border: 1px solid var(--rule-strong);
+    border-radius: 5px;
+    background: var(--paper-raised);
+    color: var(--ink);
+  }
+  .search:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+  select.ctl {
+    font-family: inherit;
+    font-size: 0.85rem;
+    padding: 0.5rem 0.6rem;
+    border: 1px solid var(--rule-strong);
+    border-radius: 5px;
+    background: var(--paper-raised);
+    color: var(--ink);
+  }
+  .toggle-chip {
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    font-size: 0.78rem;
+    padding: 0.45rem 0.75rem;
+    border: 1px solid var(--rule-strong);
+    border-radius: 999px;
+    background: var(--paper-raised);
+    color: var(--ink-soft);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .toggle-chip[aria-pressed="true"] {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .toggle-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .result-count {
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    font-size: 0.78rem;
+    color: var(--ink-faint);
+    margin-left: auto;
+    white-space: nowrap;
+  }
+
+  .list { margin-top: 1rem; display: flex; flex-direction: column; }
+  .entry {
+    display: grid;
+    grid-template-columns: 5.6rem 1fr auto;
+    gap: 0.9rem;
+    padding: 0.95rem 0.4rem;
+    border-bottom: 1px solid var(--rule);
+    align-items: start;
+  }
+  .entry:hover { background: var(--paper-raised-hover); }
+  .entry-meta {
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    font-size: 0.72rem;
+    color: var(--ink-faint);
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding-top: 0.15rem;
+  }
+  .entry-meta .date { color: var(--ink-soft); }
+  .entry-body { min-width: 0; }
+  .entry-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.35;
+    margin: 0 0 0.3rem;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .entry-title:hover { color: var(--accent); }
+  .entry-sub {
+    font-size: 0.78rem;
+    color: var(--ink-faint);
+    margin-bottom: 0.45rem;
+  }
+  .entry-summary {
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    margin: 0;
+  }
+  .entry-side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.4rem;
+    padding-top: 0.15rem;
+  }
+  .views {
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.82rem;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  .pill {
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    font-size: 0.66rem;
+    letter-spacing: 0.03em;
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    white-space: nowrap;
+    text-transform: uppercase;
+  }
+  .pill.good { background: var(--good-soft); color: var(--good); }
+  .pill.muted { background: var(--muted-badge-soft); color: var(--muted-badge); }
+
+  @media (max-width: 640px) {
+    .entry { grid-template-columns: 1fr; gap: 0.4rem; }
+    .entry-meta { flex-direction: row; gap: 0.6rem; }
+    .entry-side { flex-direction: row-reverse; align-items: center; justify-content: flex-end; }
+  }
+
+  .empty {
+    padding: 3rem 1rem;
+    text-align: center;
+    color: var(--ink-faint);
+    font-size: 0.9rem;
+  }
+
+  footer {
+    margin-top: 2.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--rule);
+    font-size: 0.78rem;
+    color: var(--ink-faint);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .entry { transition: background-color 0.12s ease; }
+    .toggle-chip { transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease; }
+  }
+</style>
+
+<div class="wrap">
+  <div class="masthead">
+    <div class="kicker">__KICKER__</div>
+    <h1>__HEADLINE__</h1>
+    <p class="dek">__DEK__</p>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="note">
+    <strong>Reading this digest:</strong> transcript-backed summaries reflect what's actually said in the video. Metadata-only entries (marked <span class="pill muted" style="vertical-align:1px">meta only</span>) are shallower and occasionally wrong when a title is clickbait or the video is mistagged.
+  </div>
+
+  <div class="toolbar">
+    <input class="search" id="search" type="text" placeholder="Filter by title, channel, or summary…" autocomplete="off" />
+    <select class="ctl" id="sort">
+      <option value="date-desc">Newest first</option>
+      <option value="date-asc">Oldest first</option>
+      <option value="views-desc">Most viewed</option>
+      <option value="views-asc">Least viewed</option>
+    </select>
+    <button class="toggle-chip" id="filterTranscript" type="button" aria-pressed="false">transcript only</button>
+    <button class="toggle-chip" id="filterShorts" type="button" aria-pressed="false">exclude shorts</button>
+    <span class="result-count" id="resultCount"></span>
+  </div>
+
+  <div class="list" id="list"></div>
+  <div class="empty" id="empty" hidden>No videos match this filter.</div>
+
+  <footer>
+    <span>__SOURCE_LINE__</span>
+    <span></span>
+  </footer>
+</div>
+
+<script>
+  const DATA = __DATA_JSON__;
+
+  function fmtViews(n) {
+    if (n === null || n === undefined) return "—";
+    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+    if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
+    return String(n);
+  }
+  function fmtDuration(s) {
+    if (s === null || s === undefined) return "—";
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+    if (h > 0) return h + ":" + String(m).padStart(2, "0") + ":" + String(sec).padStart(2, "0");
+    return m + ":" + String(sec).padStart(2, "0");
+  }
+  function fmtDate(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric" }) + " · " +
+      d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  }
+  function esc(s) {
+    const div = document.createElement("div");
+    div.textContent = s;
+    return div.innerHTML;
+  }
+
+  const withTranscript = DATA.filter(d => d.hasTranscript).length;
+  const totalViews = DATA.reduce((a, d) => a + (d.views || 0), 0);
+  const shortsCount = DATA.filter(d => d.isShort).length;
+
+  document.getElementById("stats").innerHTML = `
+    <div class="stat"><div class="stat-num">${DATA.length}</div><div class="stat-label">Videos found</div></div>
+    <div class="stat"><div class="stat-num">${withTranscript}</div><div class="stat-label">Real transcripts (${DATA.length ? Math.round(withTranscript/DATA.length*100) : 0}%)</div></div>
+    <div class="stat"><div class="stat-num">${fmtViews(totalViews)}</div><div class="stat-label">Combined views</div></div>
+    <div class="stat"><div class="stat-num">${shortsCount}</div><div class="stat-label">Shorts (of ${DATA.length})</div></div>
+  `;
+
+  const state = { query: "", sort: "date-desc", transcriptOnly: false, excludeShorts: false };
+
+  function render() {
+    let rows = DATA.slice();
+    if (state.query) {
+      const q = state.query.toLowerCase();
+      rows = rows.filter(d =>
+        d.title.toLowerCase().includes(q) ||
+        d.channel.toLowerCase().includes(q) ||
+        d.summary.toLowerCase().includes(q)
+      );
+    }
+    if (state.transcriptOnly) rows = rows.filter(d => d.hasTranscript);
+    if (state.excludeShorts) rows = rows.filter(d => !d.isShort);
+
+    rows.sort((a, b) => {
+      switch (state.sort) {
+        case "date-asc": return new Date(a.published) - new Date(b.published);
+        case "views-desc": return (b.views || 0) - (a.views || 0);
+        case "views-asc": return (a.views || 0) - (b.views || 0);
+        default: return new Date(b.published) - new Date(a.published);
+      }
+    });
+
+    document.getElementById("resultCount").textContent = rows.length + " / " + DATA.length + " shown";
+    const list = document.getElementById("list");
+    const empty = document.getElementById("empty");
+    if (!rows.length) {
+      list.innerHTML = "";
+      empty.hidden = false;
+      return;
+    }
+    empty.hidden = true;
+    list.innerHTML = rows.map(d => `
+      <div class="entry">
+        <div class="entry-meta">
+          <span class="date">${fmtDate(d.published)}</span>
+          <span>${fmtDuration(d.duration)}${d.isShort ? " · short" : ""}</span>
+        </div>
+        <div class="entry-body">
+          <a class="entry-title" href="https://youtube.com/watch?v=${d.id}" target="_blank" rel="noopener">${esc(d.title)}</a>
+          <div class="entry-sub">${esc(d.channel)}</div>
+          <p class="entry-summary">${esc(d.summary)}</p>
+        </div>
+        <div class="entry-side">
+          <span class="views">${fmtViews(d.views)} views</span>
+          <span class="pill ${d.hasTranscript ? "good" : "muted"}">${d.hasTranscript ? "transcript" : "meta only"}</span>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  document.getElementById("search").addEventListener("input", e => { state.query = e.target.value; render(); });
+  document.getElementById("sort").addEventListener("change", e => { state.sort = e.target.value; render(); });
+  document.getElementById("filterTranscript").addEventListener("click", e => {
+    state.transcriptOnly = !state.transcriptOnly;
+    e.target.setAttribute("aria-pressed", String(state.transcriptOnly));
+    render();
+  });
+  document.getElementById("filterShorts").addEventListener("click", e => {
+    state.excludeShorts = !state.excludeShorts;
+    e.target.setAttribute("aria-pressed", String(state.excludeShorts));
+    render();
+  });
+
+  render();
+</script>

@@ -4,3 +4,6 @@ main.env
 .env.local
 *.log
 digest-*.json
+digest-*.html
+logs/
+.quota-usage.json

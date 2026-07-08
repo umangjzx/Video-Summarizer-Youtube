@@ -4,7 +4,7 @@ import fs from "fs";
 // Supports both `.env` (standard) and the older `main.env` this project started with,
 // so existing local setups keep working without renaming anything.
 const envPath = fs.existsSync(".env") ? ".env" : fs.existsSync("main.env") ? "main.env" : undefined;
-if (envPath) loadEnv({ path: envPath });
+if (envPath) loadEnv({ path: envPath, quiet: true });
 
 export function requireApiKey() {
   const key = process.env.YOUTUBE_API_KEY;

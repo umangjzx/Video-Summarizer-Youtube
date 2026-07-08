@@ -17,6 +17,7 @@ import { writeFileSync } from "node:fs";
 import { requireApiKey } from "../src/lib/env.js";
 import { searchVideos, getVideoDetailsBulk } from "../src/lib/youtube.js";
 import { fetchTranscriptsSequential } from "../src/lib/transcripts.js";
+import { getUsage } from "../src/lib/quota.js";
 
 function usage() {
   console.error(`Usage: node scripts/digest.mjs "<query>" [options]
@@ -138,6 +139,9 @@ async function main() {
   if (!values["skip-transcripts"]) {
     console.error(`Transcripts available: ${withTranscript}/${report.length} (${Math.round((withTranscript / report.length) * 100)}%)`);
   }
+
+  const quota = getUsage();
+  console.error(`YouTube API quota today (${quota.quotaDay}, Pacific Time): ${quota.unitsUsed}/${quota.limit} used (${quota.percentUsed}%), ${quota.remaining} remaining.`);
 }
 
 main().catch((e) => {

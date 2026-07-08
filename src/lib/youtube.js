@@ -1,3 +1,5 @@
+import { recordUsage } from "./quota.js";
+
 const YT_BASE = "https://www.googleapis.com/youtube/v3";
 
 export async function ytFetch(apiKey, path, params) {
@@ -12,6 +14,7 @@ export async function ytFetch(apiKey, path, params) {
     const reason = data?.error?.message || res.statusText;
     throw new Error(`YouTube API error (${res.status}): ${reason}`);
   }
+  recordUsage(path);
   return data;
 }
 
