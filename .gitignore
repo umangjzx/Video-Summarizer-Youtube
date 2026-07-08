@@ -3,3 +3,4 @@ main.env
 .env
 .env.local
 *.log
+digest-*.json

@@ -5,10 +5,12 @@
   "type": "module",
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "digest": "node scripts/digest.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
+    "dotenv": "^17.4.2",
     "express": "^4.19.2",
     "youtube-transcript": "^1.3.1",
     "zod": "^3.23.8"

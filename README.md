@@ -45,6 +45,26 @@ For a batch workflow of 80-100 videos: call `search_videos` once (up to 100 resu
 pulling all transcripts into context at once. Expect most of those transcript calls to fail if run through the remote
 connector — plan for a metadata-only digest as the realistic baseline.
 
+## Local digest CLI
+
+For batch video-digest workflows (e.g. "summarize 100 videos about X from the past week"), don't drive the MCP
+tools by hand — use `scripts/digest.mjs` directly. It shares the same library code as the server (`src/lib/`), runs
+from your own machine so transcript fetching actually works (see limitation above), and writes one JSON report file
+instead of requiring dozens of manual tool calls.
+
+```bash
+npm run digest -- "AI stock market analysis" --days 7 --max 100
+```
+
+This searches the last 7 days (up to 100 results), fetches stats and transcripts for every result, and writes
+`digest-ai-stock-market-analysis-<date>.json` with one entry per video (metadata + transcript where available).
+Turning that report into an actual written digest/summary is a separate step — hand the file to Claude ("read
+`digest-*.json` and write me a summary of each video") or write your own summarizer against it.
+
+Options: `--after`/`--before` (explicit ISO date range, overrides `--days`), `--order` (`date`/`relevance`/`viewCount`/`rating`),
+`--lang` (preferred transcript language), `--max-chars` (per-transcript truncation, default 20000), `--skip-details`,
+`--skip-transcripts`, `--out <path>`. Run `node scripts/digest.mjs --help` for the full list.
+
 ## 1. Get a YouTube API key (free)
 
 1. Go to console.cloud.google.com → create/select a project
@@ -58,8 +78,12 @@ Quota: 10,000 units/day shared pool, plus a separate ~100 calls/day bucket speci
 
 ```bash
 npm install
-YOUTUBE_API_KEY=your_real_key PORT=8080 npm start
+cp .env.example .env   # then edit .env and paste in your real key
+npm start
 ```
+
+The server (and the digest CLI below) load `.env` automatically via `dotenv` — no need to `export` the key manually
+in every shell session. `.env` is gitignored; never commit your real key.
 
 Confirm it boots and lists tools:
 ```bash
