@@ -93,21 +93,39 @@ curl -s -X POST http://localhost:8080/mcp \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
 ```
 
-## 3. Deploy it somewhere public
+## 3. Expose it publicly
 
-Cowork's custom connectors are **remote** — Anthropic's servers connect to your server over the public internet, not your laptop. Pick any host that gives you a public HTTPS URL and lets you set environment variables, e.g.:
+Cowork's custom connectors are **remote** — Anthropic's servers connect to your server over the public internet, not
+your laptop directly. Two options, with a real tradeoff:
 
-- Render.com (free/low-cost web service)
-- Railway.app
-- Fly.io
-- A small VPS with a reverse proxy (Caddy/nginx) for HTTPS
+### Option A: Deploy to a cloud host (Render, Railway, Fly.io, a VPS)
 
-Set these environment variables on the host:
-- `YOUTUBE_API_KEY` — your real key
-- `MCP_AUTH_TOKEN` — a random secret string **you generate** (e.g. `openssl rand -hex 32`) — this stops strangers from finding your public URL and burning your quota
-- `PORT` — usually set automatically by the host
+Simple, always-on, no need to keep your own machine running. Set `YOUTUBE_API_KEY` (and optionally `PORT`) as
+environment variables on the host. **But**: transcript fetching (`get_transcript`/`get_transcripts_bulk`) gets
+CAPTCHA-blocked reliably from shared cloud/datacenter IPs — see the limitation above. Use this if you're fine with
+metadata-only summaries through Cowork.
 
-Your MCP endpoint will be: `https://your-app.your-host.com/mcp`
+### Option B: Tunnel your own machine (real transcripts work)
+
+Run the actual server on your own computer and expose it via a tunnel, so outbound requests to YouTube come from your
+residential IP instead of a datacenter's. Same server, same code — just hosted from home.
+
+1. Install [ngrok](https://ngrok.com/download) (get past any antivirus false-positive warning yourself — this is a
+   known issue with ngrok specifically, not a sign the official binary is actually malicious).
+2. Sign up free at ngrok.com, grab an authtoken from the dashboard, run `ngrok config add-authtoken <token>`.
+3. Reserve a free static domain in the dashboard's **Domains** section (Universal Gateway) — a random domain resets
+   every time you restart the tunnel, so a static one means you configure the Cowork connector URL once and it keeps
+   working.
+4. Edit the `tunnel` script in `package.json` to use your static domain, then run:
+   ```bash
+   npm run tunnel
+   ```
+   This starts the server and the ngrok tunnel together with one command (via `concurrently`). Stop both with Ctrl+C.
+
+Your machine, the server process, and the tunnel all need to be running whenever you want to use the Cowork connector
+— if you close your laptop, the connector will fail until you run `npm run tunnel` again.
+
+Either way, your MCP endpoint is `https://<your-domain>/mcp`.
 
 ## 4. Add it as a Custom Connector
 

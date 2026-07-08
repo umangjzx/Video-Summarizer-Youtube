@@ -6,7 +6,8 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "digest": "node scripts/digest.mjs"
+    "digest": "node scripts/digest.mjs",
+    "tunnel": "concurrently -n server,ngrok -c blue,green \"npm start\" \"ngrok http --url=https://single-darkness-estrogen.ngrok-free.dev 8080\""
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
@@ -14,5 +15,8 @@
     "express": "^4.19.2",
     "youtube-transcript": "^1.3.1",
     "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.3"
   }
 }
