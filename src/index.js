@@ -323,6 +323,12 @@ server.tool(
 // ---- HTTP transport wiring ----
 const app = express();
 
+// TEMPORARY diagnostic logging — remove once the connector handshake issue is resolved.
+app.use((req, res, next) => {
+  console.error(`[REQ] ${req.method} ${req.originalUrl} ua="${req.headers["user-agent"] || ""}" accept="${req.headers["accept"] || ""}"`);
+  next();
+});
+
 // Remote MCP clients (claude.ai / Cowork running in a browser context) call this
 // endpoint cross-origin, so it needs CORS headers or the browser blocks the request
 // before it ever reaches Express — this shows up client-side as a generic
