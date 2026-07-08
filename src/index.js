@@ -306,28 +306,29 @@ server.tool(
   },
   async ({ videoIds, lang, maxChars }) => {
     const cap = maxChars || 20000;
-    const results = await Promise.all(
-      videoIds.map(async (videoId) => {
-        try {
-          const result = await fetchTranscriptText(videoId, lang, cap);
-          return { videoId, available: true, ...result };
-        } catch (e) {
-          return { videoId, available: false, error: e.message };
-        }
-      })
-    );
+    // Sequential with a jittered delay rather than Promise.all: firing all requests at once
+    // from a shared cloud IP is exactly the burst pattern that trips YouTube's anti-bot
+    // CAPTCHA gate. This reduces (does not eliminate) how often that happens.
+    const results = [];
+    for (let i = 0; i < videoIds.length; i++) {
+      if (i > 0) {
+        const delayMs = 400 + Math.floor(Math.random() * 400);
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+      const videoId = videoIds[i];
+      try {
+        const result = await fetchTranscriptText(videoId, lang, cap);
+        results.push({ videoId, available: true, ...result });
+      } catch (e) {
+        results.push({ videoId, available: false, error: e.message });
+      }
+    }
     return { content: [{ type: "text", text: JSON.stringify({ results }, null, 2) }] };
   }
 );
 
 // ---- HTTP transport wiring ----
 const app = express();
-
-// TEMPORARY diagnostic logging — remove once the connector handshake issue is resolved.
-app.use((req, res, next) => {
-  console.error(`[REQ] ${req.method} ${req.originalUrl} ua="${req.headers["user-agent"] || ""}" accept="${req.headers["accept"] || ""}"`);
-  next();
-});
 
 // Remote MCP clients (claude.ai / Cowork running in a browser context) call this
 // endpoint cross-origin, so it needs CORS headers or the browser blocks the request
