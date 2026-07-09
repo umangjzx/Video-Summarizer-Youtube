@@ -82,6 +82,19 @@ node scripts/render-digest.mjs digest-ai-stock-market-analysis-2026-07-08.json s
 Run without `summaries.json` and it still renders, falling back to a truncated description per video — useful for a
 quick look at what a search returned before spending effort writing real summaries.
 
+### Rendering as a PDF instead
+
+`scripts/render-pdf.mjs` takes the same two inputs (report + summaries) and produces a print/share-friendly PDF
+instead of an interactive page — one entry per video (title linked to the video, channel/date/views line, summary
+paragraph), paginated automatically:
+
+```bash
+node scripts/render-pdf.mjs digest-ai-stock-market-analysis-2026-07-08.json summaries.json digest.pdf
+```
+
+This uses `pdfkit` (pure JS, no Python/browser dependency) rather than converting the HTML page — it's a simpler,
+text-flow layout, not a pixel copy of the interactive digest.
+
 ## Quota tracking
 
 Every real API call (`search_videos`, `get_video_details`, `get_channel_uploads`, `list_captions`) is recorded against

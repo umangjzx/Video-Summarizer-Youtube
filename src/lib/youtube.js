@@ -18,6 +18,20 @@ export async function ytFetch(apiKey, path, params) {
   return data;
 }
 
+// The Data API returns titles/descriptions with HTML entities escaped
+// (e.g. "Salt & Pepper" comes back as "Salt &amp; Pepper") — decode them so
+// every consumer (Claude reading tool output, the CLI reports, rendered
+// HTML/PDF) sees plain text instead of literal entity codes.
+function decodeEntities(s) {
+  if (!s) return s;
+  return s
+    .replace(/&amp;/g, "&")
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+}
+
 export function isoDuration(pt) {
   // Convert ISO 8601 duration (e.g. PT4M13S) to seconds, roughly.
   const m = pt?.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
@@ -53,11 +67,11 @@ export async function searchVideos(apiKey, { query, publishedAfter, publishedBef
     for (const it of data.items || []) {
       items.push({
         videoId: it.id.videoId,
-        title: it.snippet.title,
-        channelTitle: it.snippet.channelTitle,
+        title: decodeEntities(it.snippet.title),
+        channelTitle: decodeEntities(it.snippet.channelTitle),
         channelId: it.snippet.channelId,
         publishedAt: it.snippet.publishedAt,
-        description: it.snippet.description,
+        description: decodeEntities(it.snippet.description),
       });
     }
   } while (items.length < target && nextPageToken);
@@ -75,8 +89,8 @@ export async function getVideoDetails(apiKey, videoIds) {
     const seconds = isoDuration(it.contentDetails?.duration);
     return {
       videoId: it.id,
-      title: it.snippet?.title,
-      channelTitle: it.snippet?.channelTitle,
+      title: decodeEntities(it.snippet?.title),
+      channelTitle: decodeEntities(it.snippet?.channelTitle),
       publishedAt: it.snippet?.publishedAt,
       viewCount: it.statistics?.viewCount ? Number(it.statistics.viewCount) : null,
       likeCount: it.statistics?.likeCount ? Number(it.statistics.likeCount) : null,
@@ -113,7 +127,7 @@ export async function getChannelUploads(apiKey, { channelId, maxResults, pageTok
 
   const items = (plData.items || []).map((it) => ({
     videoId: it.contentDetails?.videoId,
-    title: it.snippet?.title,
+    title: decodeEntities(it.snippet?.title),
     publishedAt: it.contentDetails?.videoPublishedAt || it.snippet?.publishedAt,
   }));
 
