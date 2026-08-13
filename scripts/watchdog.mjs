@@ -19,7 +19,7 @@ const logDir = join(rootDir, "logs");
 mkdirSync(logDir, { recursive: true });
 const logFile = join(logDir, "watchdog.log");
 
-const NGROK_DOMAIN = process.env.NGROK_DOMAIN || "single-darkness-estrogen.ngrok-free.dev";
+const NGROK_DOMAIN = process.env.NGROK_DOMAIN || "crawlers-nastiness-unrushed.ngrok-free.dev";
 const MAX_BACKOFF_MS = 30_000;
 
 function log(line) {
