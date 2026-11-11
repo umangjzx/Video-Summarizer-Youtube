@@ -3,12 +3,16 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const QUOTA_FILE = join(__dirname, "..", "..", ".quota-usage.json");
+// QUOTA_FILE can be overridden (the tests do, so they never touch the real usage
+// file). Read at call time rather than import time so it can be set after import.
+function quotaFile() {
+  return process.env.QUOTA_FILE || join(__dirname, "..", "..", ".quota-usage.json");
+}
 
 // Real per-endpoint costs from the YouTube Data API v3 docs — search.list is
 // far more expensive than everything else, which is why search results are
 // capped/paginated carefully elsewhere in this codebase.
-const COSTS = { search: 100, videos: 1, channels: 1, playlistItems: 1, captions: 50 };
+export const COSTS = { search: 100, videos: 1, channels: 1, playlistItems: 1, captions: 50 };
 const DAILY_LIMIT = 10_000;
 const WARN_THRESHOLD = 0.8;
 
@@ -26,7 +30,7 @@ function currentQuotaDay() {
 
 function readState() {
   try {
-    const raw = JSON.parse(fs.readFileSync(QUOTA_FILE, "utf8"));
+    const raw = JSON.parse(fs.readFileSync(quotaFile(), "utf8"));
     if (raw.quotaDay === currentQuotaDay()) return raw;
   } catch {
     // Missing or corrupt file — start fresh below.
@@ -36,7 +40,7 @@ function readState() {
 
 function writeState(state) {
   try {
-    fs.writeFileSync(QUOTA_FILE, JSON.stringify(state, null, 2));
+    fs.writeFileSync(quotaFile(), JSON.stringify(state, null, 2));
   } catch (e) {
     console.error("WARN: failed to persist quota usage:", e.message);
   }

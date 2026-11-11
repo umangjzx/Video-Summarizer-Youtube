@@ -41,7 +41,7 @@ transcript-depth summaries, run that part of the workflow from a local session (
 instead of through the remote connector, or route the server's outbound requests through a residential/rotating proxy
 (added cost/complexity, not implemented here).
 
-For a batch workflow of 80-100 videos: call `search_videos` once (up to 100 results, ~2 search units), then call
+For a batch workflow of 80-100 videos: call `search_videos` once (up to 100 results = 2 pages = 200 quota units), then call
 `get_transcripts_bulk` in batches of ~10-15 video IDs, summarizing each batch before requesting the next rather than
 pulling all transcripts into context at once. Expect most of those transcript calls to fail if run through the remote
 connector — plan for a metadata-only digest as the realistic baseline.
@@ -116,7 +116,10 @@ at all since it's not part of the official API.
 3. APIs & Services → Credentials → Create Credentials → API Key
 4. (Recommended) Restrict the key to the YouTube Data API v3
 
-Quota: 10,000 units/day shared pool, plus a separate ~100 calls/day bucket specifically for `search.list`. Budget your search calls accordingly — `get_video_details` and `get_channel_uploads` are cheap (1 unit) and don't touch the search bucket.
+Quota: one 10,000 units/day pool shared by everything. `search.list` is by far the most expensive call at **100 units per
+page of up to 50 results** (so about 100 pages/day at most), `captions.list` costs 50, and `videos` / `channels` /
+`playlistItems` cost 1. `get_video_details` and `get_channel_uploads` are therefore cheap, and transcripts cost nothing.
+Budget your searches accordingly.
 
 ## 2. Run it locally to test
 
@@ -190,7 +193,7 @@ In Claude (claude.ai, Desktop, or Cowork):
    unset (no auth) rather than implement full OAuth. Also turn off "Individual sign-in" in the connector's advanced
    settings — leaving it on makes Claude attempt an OAuth handshake your server doesn't implement, which surfaces as a
    "couldn't register with sign-in service" error even when the server itself is reachable.
-4. The server must send CORS headers (already handled in `src/index.js`) since the connecting client calls it
+4. The server must send CORS headers (already handled in `src/app.js`) since the connecting client calls it
    cross-origin — without this, connection attempts fail client-side with a generic, hard-to-diagnose error.
 5. Enable the connector for your conversation/Cowork task via the "+" → Connectors menu
 

@@ -1,4 +1,4 @@
-import { recordUsage } from "./quota.js";
+import { recordUsage, COSTS } from "./quota.js";
 
 const YT_BASE = "https://www.googleapis.com/youtube/v3";
 
@@ -22,24 +22,25 @@ export async function ytFetch(apiKey, path, params) {
 // (e.g. "Salt & Pepper" comes back as "Salt &amp; Pepper") — decode them so
 // every consumer (Claude reading tool output, the CLI reports, rendered
 // HTML/PDF) sees plain text instead of literal entity codes.
-function decodeEntities(s) {
+// "&amp;" must be decoded LAST: decoding it first turns a literal "&amp;lt;"
+// into "&lt;" and then (wrongly) into "<".
+export function decodeEntities(s) {
   if (!s) return s;
   return s
-    .replace(/&amp;/g, "&")
-    .replace(/&#39;/g, "'")
+    .replace(/&#39;|&#x27;|&apos;/g, "'")
     .replace(/&quot;/g, '"')
     .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">");
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&");
 }
 
+// Convert an ISO 8601 duration (e.g. PT4M13S, or P1DT2H for 24h+ livestreams) to
+// seconds. Returns null if the string isn't a duration at all.
 export function isoDuration(pt) {
-  // Convert ISO 8601 duration (e.g. PT4M13S) to seconds, roughly.
-  const m = pt?.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  const m = pt?.match(/^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/);
   if (!m) return null;
-  const h = parseInt(m[1] || "0", 10);
-  const min = parseInt(m[2] || "0", 10);
-  const s = parseInt(m[3] || "0", 10);
-  return h * 3600 + min * 60 + s;
+  const [d, h, min, s] = [m[1], m[2], m[3], m[4]].map((v) => parseInt(v || "0", 10));
+  return d * 86400 + h * 3600 + min * 60 + s;
 }
 
 export async function searchVideos(apiKey, { query, publishedAfter, publishedBefore, order, maxResults, pageToken }) {
@@ -47,7 +48,7 @@ export async function searchVideos(apiKey, { query, publishedAfter, publishedBef
   const items = [];
   let nextPageToken = pageToken;
   let totalResultsEstimate;
-  let searchUnitsUsed = 0;
+  let searchCalls = 0;
 
   do {
     const data = await ytFetch(apiKey, "search", {
@@ -60,7 +61,7 @@ export async function searchVideos(apiKey, { query, publishedAfter, publishedBef
       publishedBefore,
       pageToken: nextPageToken,
     });
-    searchUnitsUsed++;
+    searchCalls++;
     totalResultsEstimate = data.pageInfo?.totalResults;
     nextPageToken = data.nextPageToken || null;
 
@@ -76,7 +77,9 @@ export async function searchVideos(apiKey, { query, publishedAfter, publishedBef
     }
   } while (items.length < target && nextPageToken);
 
-  return { items, nextPageToken, totalResultsEstimate, searchUnitsUsed };
+  // searchCalls = pages fetched; quotaUnitsUsed = what those pages actually cost
+  // (each search.list page is 100 units, not 1).
+  return { items, nextPageToken, totalResultsEstimate, searchCalls, quotaUnitsUsed: searchCalls * COSTS.search };
 }
 
 export async function getVideoDetails(apiKey, videoIds) {

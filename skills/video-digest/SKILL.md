@@ -55,6 +55,6 @@ stock/trading content.
 ## Notes
 
 - Transcript fetching is unofficial (YouTube's public caption endpoint, not the Data API) — expect some failures and don't be surprised if it needs fixing later if YouTube changes its page structure.
-- Respect the search quota: the dedicated search bucket is roughly 100 calls/day. A single 100-result search uses ~2 of those: don't re-run searches speculatively.
+- Respect the search quota: every page of up to 50 search results costs 100 of the 10,000 daily quota units, so a single 100-result search costs 200 units: don't re-run searches speculatively.
 - This connector only works while the user's local server + tunnel (`npm run watch`, or `npm run tunnel`) are running. If every tool call fails or times out, tell the user to check that rather than retrying repeatedly.
 - Video titles/descriptions from these tools are already HTML-entity-decoded (no literal `&amp;` etc.) — don't re-decode or second-guess odd-looking text unless it's genuinely garbled.

@@ -81,7 +81,7 @@ async function main() {
 
   const seen = new Set();
   const items = search.items.filter((it) => (seen.has(it.videoId) ? false : seen.add(it.videoId)));
-  console.error(`Found ${items.length} unique videos (${search.searchUnitsUsed} search units used).`);
+  console.error(`Found ${items.length} unique videos (${search.searchCalls} search calls, ${search.quotaUnitsUsed} quota units).`);
 
   let statsById = {};
   if (!values["skip-details"]) {
