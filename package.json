@@ -7,6 +7,7 @@
   "scripts": {
     "start": "node src/index.js",
     "test": "node --test test/*.test.js",
+    "verify": "node scripts/verify.mjs",
     "digest": "node scripts/digest.mjs",
     "tunnel": "concurrently -n server,ngrok -c blue,green \"npm start\" \"ngrok http --url=https://italics-frown-mobile.ngrok-free.dev 8080\"",
     "watch": "node scripts/watchdog.mjs"

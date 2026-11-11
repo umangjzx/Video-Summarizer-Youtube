@@ -2,6 +2,9 @@
 
 A remote MCP server that wraps the YouTube Data API v3, for use as a **Custom Connector** in Claude Cowork / Claude Desktop / claude.ai.
 
+> **Setting this up on a new machine, or handing it to an AI agent?** Give it [`AGENT-SETUP.md`](AGENT-SETUP.md): a
+> step-by-step guide with rules, verification and troubleshooting. `npm run verify` checks that a running server works.
+
 ## What it gives Claude
 
 - `search_videos` — search by keyword, optional date range, sort order (relevance/date/viewCount). Supports up to 100 results per call via automatic pagination.
