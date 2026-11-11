@@ -31,6 +31,7 @@ stock/trading content.
 
 3. **Fetch transcripts in batches.** This connector runs through a tunnel to a residential IP (not a cloud host), so transcript fetching generally works well — expect most videos to return real transcript text, with occasional legitimate failures (captions genuinely disabled/unavailable for that video, not a block). Process video IDs in batches of ~10-15 via `get_transcripts_bulk`:
    - For each video with `available: true`, write a 2-4 sentence summary grounded in the actual transcript content plus title/channel context.
+   - **Write every summary in English.** The tool returns English captions whenever they exist. If a result has `needsTranslation: true`, its transcript is in another language (named in `language`): translate it into English yourself and summarize from that. Also write the summary in English for videos whose title or description is non-English, and keep the original title alongside an English translation of it.
    - For each video with `available: false`, write a 1-sentence summary from title + description only, and note "(no transcript available)".
    - Summarize each batch before moving to the next batch — don't hold all 80-100 transcripts in context simultaneously.
    - If an entire batch comes back `available: false` (unusual), that may mean the tunnel/local server isn't running right now — mention this to the user rather than silently treating it as normal.
