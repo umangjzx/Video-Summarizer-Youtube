@@ -19,6 +19,11 @@ const YOUTUBE_API_KEY = requireApiKey();
 // that use case; this remains available for direct API callers that can set headers.
 const MCP_AUTH_TOKEN = process.env.MCP_AUTH_TOKEN;
 
+// A McpServer instance can only be connected to one transport at a time, and this
+// server is stateless (one transport per HTTP request). Sharing a single instance
+// across requests crashes the process with "Already connected to a transport" as
+// soon as two requests overlap, so build a fresh one per request.
+function createServer() {
 const server = new McpServer({
   name: "youtube-mcp-server",
   version: "1.0.0",
@@ -196,6 +201,9 @@ server.tool(
   }
 );
 
+return server;
+}
+
 // ---- HTTP transport wiring ----
 const app = express();
 
@@ -225,12 +233,27 @@ app.all("/mcp", async (req, res) => {
       return;
     }
   }
-  const transport = new StreamableHTTPServerTransport({
-    sessionIdGenerator: undefined, // stateless
-  });
-  res.on("close", () => transport.close());
-  await server.connect(transport);
-  await transport.handleRequest(req, res, req.body);
+  try {
+    const server = createServer();
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: undefined, // stateless
+    });
+    res.on("close", () => {
+      transport.close();
+      server.close();
+    });
+    await server.connect(transport);
+    await transport.handleRequest(req, res, req.body);
+  } catch (e) {
+    console.error("Error handling /mcp request:", e);
+    if (!res.headersSent) {
+      res.status(500).json({
+        jsonrpc: "2.0",
+        error: { code: -32603, message: "Internal server error" },
+        id: null,
+      });
+    }
+  }
 });
 
 const PORT = process.env.PORT || 8080;
